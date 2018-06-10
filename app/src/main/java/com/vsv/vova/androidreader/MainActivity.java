@@ -1,6 +1,7 @@
 package com.vsv.vova.androidreader;
 
 import android.content.Intent;
+import android.net.Uri;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
@@ -10,6 +11,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     Button btnFind;
     public static final int READ_REQUEST_CODE = 42;
+    private static Uri uri;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -25,7 +27,22 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void onClick(View v) {
         Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
         intent.addCategory(Intent.CATEGORY_OPENABLE);
-        intent.setType("text/*");
+        intent.setType("application/pdf");
         startActivityForResult(intent, READ_REQUEST_CODE);
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent resultData ){
+        if(requestCode == READ_REQUEST_CODE && resultCode == RESULT_OK){
+            uri = null;
+            if(resultData != null){
+                uri = resultData.getData();
+                startActivity(new Intent(this, ReadActivity.class));
+            }
+        }
+    }
+
+    public static Uri getUri(){
+        return uri;
     }
 }
