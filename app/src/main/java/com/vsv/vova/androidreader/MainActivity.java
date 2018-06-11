@@ -37,12 +37,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             uri = null;
             if(resultData != null){
                 uri = resultData.getData();
-                startActivity(new Intent(this, ReadActivity.class));
+                Intent intent = new Intent(this, ReadActivity.class);
+                intent.putExtra("uri", uri.toString());
+                startActivity(intent);
             }
         }
     }
 
-    public static Uri getUri(){
-        return uri;
-    }
 }
