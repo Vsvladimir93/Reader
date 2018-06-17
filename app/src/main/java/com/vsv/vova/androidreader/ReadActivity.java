@@ -3,29 +3,25 @@ package com.vsv.vova.androidreader;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v4.view.PagerAdapter;
-import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
-import android.widget.TextView;
-
 import com.github.barteksc.pdfviewer.PDFView;
 import com.github.barteksc.pdfviewer.listener.OnLoadCompleteListener;
 import com.github.barteksc.pdfviewer.listener.OnPageChangeListener;
 import com.github.barteksc.pdfviewer.scroll.DefaultScrollHandle;
 
-import java.util.Map;
-import java.util.Set;
+import io.realm.Realm;
+
 
 public class ReadActivity extends AppCompatActivity implements OnPageChangeListener, OnLoadCompleteListener {
 
     PDFView pdfView;
     int pageNumber;
     SharedPreferences sharedPreferences;
-    private static Uri URI;
+    private static Uri uri;
+    Intent intent;
+
 
 
     @Override
@@ -33,35 +29,47 @@ public class ReadActivity extends AppCompatActivity implements OnPageChangeListe
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_read);
 
+        intent = getIntent();
 
-        Intent intent = getIntent();
+        pdfView = findViewById(R.id.pdfView);
 
-
-
-        pdfView = (PDFView) findViewById(R.id.pdfView);
-        Log.d("vvv", intent.getStringExtra("extra"));
-
-        if(intent.getStringExtra("extra").equals("CONTINUE")){
-            Log.d("vvv", intent.getStringExtra("extra")+"MyExtra");
-            loadBook();
-        } else {
-            URI = Uri.parse(intent.getStringExtra("extra"));
-        pdfView.fromUri(URI)
-                .defaultPage(pageNumber)
-                .onPageChange(this)
-                .enableAnnotationRendering(true)
-                .onLoad(this)
-                .scrollHandle(new DefaultScrollHandle(this))
-                .load();}
+        loadPdfView();
 
     }
 
+    private void loadPdfView(){
+        if(intent.getStringExtra("extra").equals("CONTINUE")){
+            loadBook();
+        } else {
+            uri = uri.parse(intent.getStringExtra("extra"));
+            pdfView.fromUri(uri)
+                    .defaultPage(pageNumber)
+                    .onPageChange(this)
+                    .enableAnnotationRendering(true)
+                    .onLoad(this)
+                    .scrollHandle(new DefaultScrollHandle(this))
+                    .load();
+        }
+
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        try {
+            Log.d(ReadActivity.class.getSimpleName(),
+                    "onResume: " + ReaderRealm.getRealm().where(Book.class).isNotNull("title").findAll().toString());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
     @Override
     protected void onPause() {
         super.onPause();
         Integer i = pageNumber + 1;
         saveBook();
+
     }
 
     @Override
@@ -74,28 +82,35 @@ public class ReadActivity extends AppCompatActivity implements OnPageChangeListe
 
     }
 
-    private void saveBook (){
+    private void saveBook() {
+    ReaderRealm.getRealm().executeTransaction(new Realm.Transaction() {
+        @Override
+        public void execute(Realm realm) {
+            realm.copyToRealmOrUpdate(new Book("name1",uri, 1));
+        }
+    });
+
+    }
+    /*private void saveBook (){
         sharedPreferences = getPreferences(MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();
-        editor.putString("uri", URI.toString());
+        editor.putString("uri", uri.toString());
         editor.putInt("page", pageNumber);
         editor.commit();
         Log.d("page", "Page Saved");
-    }
-    private int loadBook (){
+    }*/
+    private void loadBook (){
         sharedPreferences = getPreferences(MODE_PRIVATE);
         String loadUri = sharedPreferences.getString("uri", "");
-        URI = Uri.parse(loadUri);
+        uri = uri.parse(loadUri);
         int page = sharedPreferences.getInt("page",0 );
-        pdfView.fromUri(URI)
+        pdfView.fromUri(uri)
                 .defaultPage(page)
                 .onPageChange(this)
                 .enableAnnotationRendering(true)
                 .onLoad(this)
                 .scrollHandle(new DefaultScrollHandle(this))
                 .load();
-        Log.d("page", "Page Loaded");
-        return page ;
 
     }
 

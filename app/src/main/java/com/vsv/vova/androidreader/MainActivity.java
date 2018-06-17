@@ -13,7 +13,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     Button btnFind;
     Button btnContinue;
     public static final int REQUEST_CODE_FIND = 1;
-    public static final int REQUEST_CODE_CONTINUE = 1;
     private static Uri uri;
 
     @Override
@@ -21,12 +20,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        btnFind = (Button) findViewById(R.id.button);
+        btnFind = (Button) findViewById(R.id.buttonFind);
         btnFind.setOnClickListener(this);
-        btnContinue = (Button) findViewById(R.id.button2);
+        btnContinue = (Button) findViewById(R.id.buttonContinue);
         btnContinue.setOnClickListener(this);
-
-
     }
 
 
@@ -34,14 +31,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void onClick(View v) {
         Intent intent;
         switch (v.getId()) {
-            case R.id.button:
+            case R.id.buttonFind:
                 intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
                 intent.addCategory(Intent.CATEGORY_OPENABLE);
                 intent.setType("application/pdf");
                 startActivityForResult(intent, REQUEST_CODE_FIND);
                 Log.d("vvv", "Request code find");
                 break;
-            case R.id.button2:
+            case R.id.buttonContinue:
                 intent = new Intent(this, ReadActivity.class);
                 intent.putExtra("extra", "CONTINUE");
                 startActivity(intent);
