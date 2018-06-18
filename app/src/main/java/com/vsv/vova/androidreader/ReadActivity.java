@@ -10,15 +10,15 @@ import com.github.barteksc.pdfviewer.PDFView;
 import com.github.barteksc.pdfviewer.listener.OnLoadCompleteListener;
 import com.github.barteksc.pdfviewer.listener.OnPageChangeListener;
 import com.github.barteksc.pdfviewer.scroll.DefaultScrollHandle;
-
 import io.realm.Realm;
+import io.realm.RealmQuery;
+import io.realm.RealmResults;
 
 
 public class ReadActivity extends AppCompatActivity implements OnPageChangeListener, OnLoadCompleteListener {
 
     PDFView pdfView;
     int pageNumber;
-    SharedPreferences sharedPreferences;
     private static Uri uri;
     Intent intent;
 
@@ -30,15 +30,14 @@ public class ReadActivity extends AppCompatActivity implements OnPageChangeListe
         setContentView(R.layout.activity_read);
 
         intent = getIntent();
-
         pdfView = findViewById(R.id.pdfView);
-
         loadPdfView();
 
     }
 
     private void loadPdfView(){
         if(intent.getStringExtra("extra").equals("CONTINUE")){
+            Log.d("vvv","loadPdfView");
             loadBook();
         } else {
             uri = uri.parse(intent.getStringExtra("extra"));
@@ -67,7 +66,6 @@ public class ReadActivity extends AppCompatActivity implements OnPageChangeListe
     @Override
     protected void onPause() {
         super.onPause();
-        Integer i = pageNumber + 1;
         saveBook();
 
     }
@@ -86,26 +84,22 @@ public class ReadActivity extends AppCompatActivity implements OnPageChangeListe
     ReaderRealm.getRealm().executeTransaction(new Realm.Transaction() {
         @Override
         public void execute(Realm realm) {
-            realm.copyToRealmOrUpdate(new Book("name1",uri, 1));
+            realm.copyToRealmOrUpdate(new Book("name1",uri, 1, pageNumber));
+            Log.d("vvv","book saved");
         }
     });
 
     }
-    /*private void saveBook (){
-        sharedPreferences = getPreferences(MODE_PRIVATE);
-        SharedPreferences.Editor editor = sharedPreferences.edit();
-        editor.putString("uri", uri.toString());
-        editor.putInt("page", pageNumber);
-        editor.commit();
-        Log.d("page", "Page Saved");
-    }*/
+
     private void loadBook (){
-        sharedPreferences = getPreferences(MODE_PRIVATE);
-        String loadUri = sharedPreferences.getString("uri", "");
-        uri = uri.parse(loadUri);
-        int page = sharedPreferences.getInt("page",0 );
+        RealmQuery<Book> bookRealmQuery = ReaderRealm.getRealm().where(Book.class);
+        bookRealmQuery.equalTo("id", 1);
+        Book book = bookRealmQuery.findFirst();
+        Integer i = book.getPage();
+        uri = book.getUri();
+        Log.d("vvv",i.toString());
         pdfView.fromUri(uri)
-                .defaultPage(page)
+                .defaultPage(book.getPage())
                 .onPageChange(this)
                 .enableAnnotationRendering(true)
                 .onLoad(this)

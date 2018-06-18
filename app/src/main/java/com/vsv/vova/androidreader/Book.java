@@ -13,10 +13,11 @@ public class Book extends RealmObject {
     public Book() {
     }
 
-    public Book(String title, Uri uri, int id) {
+    public Book(String title, Uri uri, int id, int page) {
         this.title = title;
         this.uri = uri.toString();
         this.id = id;
+        this.page = page;
     }
 
 
@@ -24,6 +25,17 @@ public class Book extends RealmObject {
     private int id;
     private String title;
     private String uri;
+    private int page;
+
+    public int getPage() {
+        return page;
+    }
+
+    public void setPage(int page) {
+        this.page = page;
+    }
+
+
 
     public int getId() {
         return id;
