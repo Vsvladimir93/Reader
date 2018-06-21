@@ -6,7 +6,14 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ListView;
+
+import java.util.ArrayList;
+
+import io.realm.RealmQuery;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
@@ -14,6 +21,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     Button btnContinue;
     public static final int REQUEST_CODE_FIND = 1;
     private static Uri uri;
+
+    ListView listView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -24,6 +33,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btnFind.setOnClickListener(this);
         btnContinue = (Button) findViewById(R.id.buttonContinue);
         btnContinue.setOnClickListener(this);
+
+        listView = (ListView) findViewById(R.id.listView);
+        ArrayList<Book> bookArrayList = new ArrayList<>();
+
+        RealmQuery<Book> bookRealmQuery = ReaderRealm.getRealm().where(Book.class);
+        bookArrayList.addAll(bookRealmQuery.findAll());
+
+        ArrayAdapter<Book> arrayAdapter = new ArrayAdapter<Book>(this, android.R.layout.simple_list_item_1, bookArrayList);
+
+        listView.setAdapter(arrayAdapter);
     }
 
 
