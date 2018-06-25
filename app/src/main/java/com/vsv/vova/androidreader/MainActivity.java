@@ -9,9 +9,11 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ListAdapter;
 import android.widget.ListView;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import io.realm.RealmQuery;
 
@@ -23,6 +25,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private static Uri uri;
 
     ListView listView;
+    List<Book> bookList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,14 +38,27 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btnContinue.setOnClickListener(this);
 
         listView = (ListView) findViewById(R.id.listView);
-        ArrayList<Book> bookArrayList = new ArrayList<>();
+        bookList = new ArrayList<>();
+        Book book1 = new Book();
+        book1.setPage(9);
+        book1.setTitle("title1");
+        Book book2 = new Book();
+        book2.setPage(10);
+        book2.setTitle("title2");
+        bookList.add(book1);
+        bookList.add(book2);
 
-        RealmQuery<Book> bookRealmQuery = ReaderRealm.getRealm().where(Book.class);
-        bookArrayList.addAll(bookRealmQuery.findAll());
+        /*RealmQuery<Book> bookRealmQuery = ReaderRealm.getRealm().where(Book.class);
+        bookList.addAll(bookRealmQuery.findAll());
+*/
 
-        ArrayAdapter<Book> arrayAdapter = new ArrayAdapter<Book>(this, android.R.layout.simple_list_item_1, bookArrayList);
 
-        listView.setAdapter(arrayAdapter);
+//        ArrayAdapter<Book> arrayAdapter = new ArrayAdapter<Book>(this, android.R.layout.simple_list_item_1, bookArrayList);
+
+        BookListAdapter bookListAdapter = new BookListAdapter(bookList, this);
+        listView.setAdapter(bookListAdapter);
+
+
     }
 
 
