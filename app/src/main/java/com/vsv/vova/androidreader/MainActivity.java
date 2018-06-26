@@ -24,8 +24,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public static final int REQUEST_CODE_FIND = 1;
     private static Uri uri;
 
-    ListView listView;
-    List<Book> bookList;
+/*    ListView listView;
+    List<Book> bookList;*/
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,7 +37,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btnContinue = (Button) findViewById(R.id.buttonContinue);
         btnContinue.setOnClickListener(this);
 
-        listView = (ListView) findViewById(R.id.listView);
+        RealmQuery<Book> bookRealmQuery = ReaderRealm.getRealm().where(Book.class);
+        bookRealmQuery.findAll();
+        int x = (int) bookRealmQuery.count();
+        Log.d("vvv", "Number of books in Realm = "  + x);
+
+      /*  listView = (ListView) findViewById(R.id.listView);
         bookList = new ArrayList<>();
         Book book1 = new Book();
         book1.setPage(9);
@@ -46,18 +51,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         book2.setPage(10);
         book2.setTitle("title2");
         bookList.add(book1);
-        bookList.add(book2);
+        bookList.add(book2);*/
 
-        /*RealmQuery<Book> bookRealmQuery = ReaderRealm.getRealm().where(Book.class);
+       /* RealmQuery<Book> bookRealmQuery = ReaderRealm.getRealm().where(Book.class);
         bookList.addAll(bookRealmQuery.findAll());
 */
 
 
 //        ArrayAdapter<Book> arrayAdapter = new ArrayAdapter<Book>(this, android.R.layout.simple_list_item_1, bookArrayList);
 
-        BookListAdapter bookListAdapter = new BookListAdapter(bookList, this);
+      /*  BookListAdapter bookListAdapter = new BookListAdapter(bookList, this);
         listView.setAdapter(bookListAdapter);
-
+*/
 
     }
 
