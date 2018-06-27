@@ -1,4 +1,4 @@
-package com.vsv.vova.androidreader;
+package com.vsv.vova.androidreader.model;
 
 import android.net.Uri;
 

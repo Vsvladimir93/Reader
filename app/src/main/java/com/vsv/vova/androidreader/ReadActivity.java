@@ -10,12 +10,12 @@ import com.github.barteksc.pdfviewer.PDFView;
 import com.github.barteksc.pdfviewer.listener.OnLoadCompleteListener;
 import com.github.barteksc.pdfviewer.listener.OnPageChangeListener;
 import com.github.barteksc.pdfviewer.scroll.DefaultScrollHandle;
+import com.vsv.vova.androidreader.model.Book;
 
 import java.io.File;
 
 import io.realm.Realm;
 import io.realm.RealmQuery;
-import io.realm.RealmResults;
 
 
 public class ReadActivity extends AppCompatActivity implements OnPageChangeListener, OnLoadCompleteListener {
@@ -36,14 +36,17 @@ public class ReadActivity extends AppCompatActivity implements OnPageChangeListe
         intent = getIntent();
         pdfView = findViewById(R.id.pdfView);
         loadPdfView();
-
     }
 
     private void loadPdfView(){
+        //Если была нажата кнопка Continue ( - extra == CONTINUE)
+        //Загрузка по Uri из БД
         if(intent.getStringExtra("extra").equals("CONTINUE")){
             Log.d("vvv","loadPdfView");
             loadBook();
         } else {
+            //Если окно открылось через кнопку Find (onActivityResult)
+            //Загрузка по переданному Uri
             uri = uri.parse(intent.getStringExtra("extra"));
             pdfView.fromUri(uri)
                     .defaultPage(pageNumber)
@@ -53,7 +56,6 @@ public class ReadActivity extends AppCompatActivity implements OnPageChangeListe
                     .scrollHandle(new DefaultScrollHandle(this))
                     .load();
         }
-
     }
 
     @Override
@@ -65,13 +67,14 @@ public class ReadActivity extends AppCompatActivity implements OnPageChangeListe
     @Override
     protected void onPause() {
         super.onPause();
+        Log.d("vvv", "onPause methode");
         saveBook();
 
     }
 
     @Override
     public void onPageChanged(int page, int pageCount) {
-        //Переменная которая хранит страницу текущую
+        //Переменная которой присваивается страница при перемещении экрана
         pageNumber = page;
     }
 
@@ -79,67 +82,63 @@ public class ReadActivity extends AppCompatActivity implements OnPageChangeListe
     public void loadComplete(int nbPages) {
 
     }
-        //Метод сохранения книги
+          //Метод сохранения книги
     private void saveBook() {
-        //Запись в Реалм
+
+          //Достаем название книги из Uri
+          File file = new File(uri.getPath());
+          final String title =  file.getName();
+          //Запись в Реалм
     ReaderRealm.getRealm().executeTransaction(new Realm.Transaction() {
         @Override
         public void execute(Realm realm) {
             ///Запрос колличеста объектов в Реалме для подсчета и добавления Id для следующего
             RealmQuery<Book> bookRealmQuery = ReaderRealm.getRealm().where(Book.class);
             bookRealmQuery.findAll();
-            int id = (int) bookRealmQuery.count();
-            Log.d("vvv", "get count of objects in realm - " + id);
+            int count = (int) bookRealmQuery.count();
+            Log.d("vvv", "get count of objects in realm - " + count);
             ///
-            ///Сохранение объекта в Реалм
-             //Достаем название
-             String title = "titleErr";
-             if(uri != null){ File file = new File(uri.getPath());
-               title =  file.getName();
-             }
+
+            //Достаем название
+
              //Если в Реалме есть книга с таким названием
              bookRealmQuery.equalTo("title", title);
-             //Найти первую, сравнить с текущей, перезаписать id и страницу
-             //Если нету, то записать новый экземпляр книги с последними данными.
-
-
-            /*Ошибка 26,06,18
-               Caused by: io.realm.exceptions.RealmException: Primary key field 'id' cannot be changed after object was created.
-                      at io.realm.com_vsv_vova_androidreader_BookRealmProxy.realmSet$id(com_vsv_vova_androidreader_BookRealmProxy.java:111)
-                      at com.vsv.vova.androidreader.Book.setId(Book.java:61)
-                      at com.vsv.vova.androidreader.ReadActivity$1.execute(ReadActivity.java:105)
-                      at io.realm.Realm.executeTransaction(Realm.java:1405)
-                      at com.vsv.vova.androidreader.ReadActivity.saveBook(ReadActivity.java:85)
-                      at com.vsv.vova.androidreader.ReadActivity.onPause(ReadActivity.java:68)
-            */
-
-            Book book = new Book();
-                book.setPage(pageNumber);
-                book.setTitle(title);
-                book.setId(id+1);
-            realm.copyToRealmOrUpdate(book);
-
+             Book book;
+             if((book = bookRealmQuery.findFirst()) != null ){
+                 //то - меняется только номер страницы
+                 book.setPage(pageNumber);
+                 realm.copyToRealmOrUpdate(book);
+             }else {
+                 //Иначе записывается книга с номером стр. и названием
+                 book.setPage(pageNumber);
+                 book.setTitle(title);
+                 realm.copyToRealmOrUpdate(book);
+             }
             Log.d("vvv","book saved - title - " + title +
-                    ": Id - " + (id + 1) + ": PageNumber - " + pageNumber);
+                    ": Id - " + count + ": PageNumber - " + pageNumber);
 
         }
     });
-
+        //Сохраняется строка с названием последней открытой книги
+        SharedPreferences sh = getPreferences(MODE_PRIVATE);
+        SharedPreferences.Editor ed = sh.edit();
+                ed.putString("last_book", title);
+                ed.commit();
+                Log.d("vvv","SharedPref Commit - title of last book - " + title);
     }
 
+    //Метод который загружает книгу из БД и запускает PDFView с ней
     private void loadBook (){
+        //Загружается название последней открытой книги
+        SharedPreferences sh = getPreferences(MODE_PRIVATE);
+        String title = sh.getString("last_book","");
+        Log.d("vvv", "SharedPref get title of last Book - " + title);
+        //По названию загружается книга из БД
         RealmQuery<Book> bookRealmQuery = ReaderRealm.getRealm().where(Book.class);
-        bookRealmQuery.findAll();
-        ///Подсчет объектов в Реалме
-        int counterId = (int) bookRealmQuery.count();
-        Log.d("vvv", "Id counter  = " + counterId);
-        ///Достает последний объект по Id
-        bookRealmQuery.equalTo("id", counterId);
+        bookRealmQuery.equalTo("title", title);
         Book book = bookRealmQuery.findFirst();
-        Integer i = book.getPage();
+
         uri = book.getUri();
-        Log.d("vvv",i.toString());
-        try{
         pdfView.fromUri(uri)
                 .defaultPage(book.getPage())
                 .onPageChange(this)
@@ -147,10 +146,5 @@ public class ReadActivity extends AppCompatActivity implements OnPageChangeListe
                 .onLoad(this)
                 .scrollHandle(new DefaultScrollHandle(this))
                 .load();
-        }catch(Exception e ){System.out.println("EL ERRORE");}
-
     }
-
-
-
 }

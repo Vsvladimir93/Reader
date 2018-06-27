@@ -8,6 +8,8 @@ import android.view.ViewGroup;
 import android.widget.ListAdapter;
 import android.widget.TextView;
 
+import com.vsv.vova.androidreader.model.Book;
+
 import java.util.List;
 
 public class BookListAdapter implements ListAdapter {
@@ -15,7 +17,7 @@ public class BookListAdapter implements ListAdapter {
     List<Book> bookList;
     LayoutInflater layoutInflater;
 
-    public BookListAdapter(List<Book> bookList,Context context) {
+    public BookListAdapter(List<Book> bookList, Context context) {
         this.bookList = bookList;
         layoutInflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 
