@@ -6,6 +6,7 @@ import android.net.Uri;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+
 import com.github.barteksc.pdfviewer.PDFView;
 import com.github.barteksc.pdfviewer.listener.OnLoadCompleteListener;
 import com.github.barteksc.pdfviewer.listener.OnPageChangeListener;
@@ -21,11 +22,11 @@ import io.realm.RealmQuery;
 public class ReadActivity extends AppCompatActivity implements OnPageChangeListener, OnLoadCompleteListener {
 
     PDFView pdfView;
-    int pageNumber;
-    private static Uri uri;
     Intent intent;
-
-
+    private static Uri uri;
+    int pageNumber;
+    long maximumId;
+    int countObjects;
 
 
     @Override
@@ -33,21 +34,38 @@ public class ReadActivity extends AppCompatActivity implements OnPageChangeListe
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_read);
 
+        RealmQuery<Book> bookQuery = ReaderRealm.getRealm().where(Book.class);
+        countObjects = (int) bookQuery.count();
+        Log.d("vvv", "get count of objects in realm - " + countObjects);
+        maximumId = (long) bookQuery.max("id");
+        Log.d("vvv", "maximum Id - " + maximumId);
+
         intent = getIntent();
         pdfView = findViewById(R.id.pdfView);
-        loadPdfView();
+
     }
 
-    private void loadPdfView(){
+    @Override
+    protected void onResume() {
+        super.onResume();
+        loadPdfView();
+
+    }
+
+    private void loadPdfView() {
         //Если была нажата кнопка Continue ( - extra == CONTINUE)
         //Загрузка по Uri из БД
-        if(intent.getStringExtra("extra").equals("CONTINUE")){
-            Log.d("vvv","loadPdfView");
+        if (intent.getStringExtra("extra").equals("CONTINUE")) {
+            Log.d("vvv", "loadPdfView");
             loadBook();
         } else {
+            if(intent.getStringExtra("uri")!=null){
+            uri = uri.parse(intent.getStringExtra("uri"));
+            } else{
             //Если окно открылось через кнопку Find (onActivityResult)
             //Загрузка по переданному Uri
             uri = uri.parse(intent.getStringExtra("extra"));
+            }
             pdfView.fromUri(uri)
                     .defaultPage(pageNumber)
                     .onPageChange(this)
@@ -55,21 +73,27 @@ public class ReadActivity extends AppCompatActivity implements OnPageChangeListe
                     .onLoad(this)
                     .scrollHandle(new DefaultScrollHandle(this))
                     .load();
+
         }
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        Log.d("vvv", "onPause methode");
+        Log.d("vvv", "onPause method");
         saveBook();
+    }
 
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putInt("page",pageNumber);
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        pageNumber = savedInstanceState.getInt("page");
     }
 
     @Override
@@ -80,71 +104,96 @@ public class ReadActivity extends AppCompatActivity implements OnPageChangeListe
 
     @Override
     public void loadComplete(int nbPages) {
-
     }
-          //Метод сохранения книги
+
+    //Метод сохранения книги
     private void saveBook() {
+        //Достаем название книги из Uri
+        File file = new File(uri.getPath());
+        final String bookTitle = file.getName();
 
-          //Достаем название книги из Uri
-          File file = new File(uri.getPath());
-          final String title =  file.getName();
-          //Запись в Реалм
-    ReaderRealm.getRealm().executeTransaction(new Realm.Transaction() {
-        @Override
-        public void execute(Realm realm) {
-            ///Запрос колличеста объектов в Реалме для подсчета и добавления Id для следующего
-            RealmQuery<Book> bookRealmQuery = ReaderRealm.getRealm().where(Book.class);
-            bookRealmQuery.findAll();
-            int count = (int) bookRealmQuery.count();
-            Log.d("vvv", "get count of objects in realm - " + count);
-            ///
+        //Запись в Реалм
+        ReaderRealm.getRealm().executeTransaction(new Realm.Transaction() {
+            @Override
+            public void execute(Realm realm) {
+                //Достаем название
+                //Если в Реалме есть книга с таким названием
+                RealmQuery<Book> bookRealmQuery = ReaderRealm.getRealm().where(Book.class);
+                bookRealmQuery.equalTo("title", bookTitle);
+                Book book;
+                if ((book = bookRealmQuery.findFirst()) != null) {
+                   /* Log.d("vvv", "saveBook - find same book - Update.");
+                    book.setId(maximumId +1);
+                    book.setPage(pageNumber);*/
+                   //Перезаписывается книга с новым ID и страницей
+                    book.deleteFromRealm();
+                    Book newBook = new Book(bookTitle, uri, pageNumber, maximumId+1);
+                    realm.copyToRealmOrUpdate(newBook);
+                } else {
+                    //Записывается новая книга
+                    Log.d("vvv", "saveBook - dont find the same book - Write");
+                    Book newBook = new Book(bookTitle, uri, pageNumber, maximumId +1);
+                    realm.copyToRealm(newBook);
+                }
+                Log.d("vvv", "book saved.title- " + bookTitle + " Id- " + (maximumId +1) + " Page- " + pageNumber);
+            }
+        });
 
-            //Достаем название
-
-             //Если в Реалме есть книга с таким названием
-             bookRealmQuery.equalTo("title", title);
-             Book book;
-             if((book = bookRealmQuery.findFirst()) != null ){
-                 //то - меняется только номер страницы
-                 book.setPage(pageNumber);
-                 realm.copyToRealmOrUpdate(book);
-             }else {
-                 //Иначе записывается книга с номером стр. и названием
-                 book.setPage(pageNumber);
-                 book.setTitle(title);
-                 realm.copyToRealmOrUpdate(book);
-             }
-            Log.d("vvv","book saved - title - " + title +
-                    ": Id - " + count + ": PageNumber - " + pageNumber);
-
-        }
-    });
-        //Сохраняется строка с названием последней открытой книги
+       /* //Сохраняется строка с названием последней открытой книги
         SharedPreferences sh = getPreferences(MODE_PRIVATE);
         SharedPreferences.Editor ed = sh.edit();
-                ed.putString("last_book", title);
-                ed.commit();
-                Log.d("vvv","SharedPref Commit - title of last book - " + title);
+        ed.putString("last_book", bookTitle);
+        ed.putInt("last_book_page", pageNumber);
+        ed.apply();
+        Log.d("vvv", "SharedPref Commit - title of last book - " + bookTitle);*/
     }
 
-    //Метод который загружает книгу из БД и запускает PDFView с ней
-    private void loadBook (){
-        //Загружается название последней открытой книги
+    //Метод который загружает книгу из БД и запускает PDFView
+    private void loadBook() {
+        /*//Загружается название последней открытой книги
         SharedPreferences sh = getPreferences(MODE_PRIVATE);
-        String title = sh.getString("last_book","");
-        Log.d("vvv", "SharedPref get title of last Book - " + title);
+        String bookTitle = sh.getString("last_book", "");*/
         //По названию загружается книга из БД
+        //todo Вынести в отдельный метод - ReaderRealm --
         RealmQuery<Book> bookRealmQuery = ReaderRealm.getRealm().where(Book.class);
-        bookRealmQuery.equalTo("title", title);
+        bookRealmQuery.equalTo("id", maximumId);
         Book book = bookRealmQuery.findFirst();
 
         uri = book.getUri();
         pdfView.fromUri(uri)
-                .defaultPage(book.getPage())
+                .defaultPage((int)book.getPage())
                 .onPageChange(this)
                 .enableAnnotationRendering(true)
                 .onLoad(this)
                 .scrollHandle(new DefaultScrollHandle(this))
                 .load();
     }
+
+   /* private void realmSort(){
+        Book book;
+        if(maximumId>=10){
+            RealmQuery<Book> bookRealmQuery = ReaderRealm.getRealm().where(Book.class);
+            bookRealmQuery.equalTo("id",1);
+            bookRealmQuery.findFirst().deleteFromRealm();
+
+            for(int i = 2; i<=10; i++){
+                RealmQuery<Book> bookRealmQuery1 = ReaderRealm.getRealm().where(Book.class);
+                bookRealmQuery1.equalTo("id",i);
+                Uri uri = bookRealmQuery1.findFirst().getUri();
+                int page = (int)bookRealmQuery1.findFirst().getPage();
+                String title = bookRealmQuery1.findFirst().getTitle();
+                bookRealmQuery1.findFirst().deleteFromRealm();
+                book = new Book(title, uri, page, i-1);
+
+
+            }
+        }
+
+
+
+
+    }*/
+
 }
+
+

@@ -1,7 +1,9 @@
 package com.vsv.vova.androidreader;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.database.DataSetObserver;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -35,7 +37,6 @@ public class BookListAdapter implements ListAdapter {
 
     @Override
     public void registerDataSetObserver(DataSetObserver observer) {
-
     }
 
     @Override
@@ -75,16 +76,15 @@ public class BookListAdapter implements ListAdapter {
 
     TextView textView = (TextView) view.findViewById(R.id.textView);
     TextView textView2 = (TextView) view.findViewById(R.id.textView2);
-
+        Integer page = (int) book.getPage() + 1;
+        textView2.setText(page.toString());
         textView.setText(book.getTitle());
-//        textView2.setText(book.getPage());
 
         return view;
     }
 
     public Book getBook(int position){
-        return (Book) bookList.get(position);
-
+        return bookList.get(position);
     }
 
     @Override
@@ -99,6 +99,6 @@ public class BookListAdapter implements ListAdapter {
 
     @Override
     public boolean isEmpty() {
-        return false;
+        return bookList.isEmpty();
     }
 }

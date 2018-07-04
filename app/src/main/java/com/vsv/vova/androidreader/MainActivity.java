@@ -1,14 +1,21 @@
 package com.vsv.vova.androidreader;
 
+import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.Button;
+import android.widget.ListView;
+import android.widget.Toast;
 
 import com.vsv.vova.androidreader.model.Book;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import io.realm.RealmQuery;
 
@@ -19,48 +26,56 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public static final int REQUEST_CODE_FIND = 1;
     private static Uri uri;
 
-/*    ListView listView;
-    List<Book> bookList;*/
+    ListView listView;
+    List<Book> bookList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        btnFind = (Button) findViewById(R.id.buttonFind);
+        btnFind = findViewById(R.id.buttonFind);
         btnFind.setOnClickListener(this);
-        btnContinue = (Button) findViewById(R.id.buttonContinue);
+        btnContinue = findViewById(R.id.buttonContinue);
         btnContinue.setOnClickListener(this);
+        listView = findViewById(R.id.listView);
 
-        RealmQuery<Book> bookRealmQuery = ReaderRealm.getRealm().where(Book.class);
-        bookRealmQuery.findAll();
-        int x = (int) bookRealmQuery.count();
-        Log.d("vvv", "Number of books in Realm = "  + x);
+        loadList();
 
-      /*  listView = (ListView) findViewById(R.id.listView);
-        bookList = new ArrayList<>();
-        Book book1 = new Book();
-        book1.setPage(9);
-        book1.setTitle("title1");
-        Book book2 = new Book();
-        book2.setPage(10);
-        book2.setTitle("title2");
-        bookList.add(book1);
-        bookList.add(book2);*/
+        final Context context = this;
 
-       /* RealmQuery<Book> bookRealmQuery = ReaderRealm.getRealm().where(Book.class);
-        bookList.addAll(bookRealmQuery.findAll());
-*/
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+               Log.d("vvv", "position - " + position + " id - " + id + "");
+            }
+        });
+
+        listView.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                Log.d("vvv", "item selected " + position);
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+
+            }
+        });
 
 
-//        ArrayAdapter<Book> arrayAdapter = new ArrayAdapter<Book>(this, android.R.layout.simple_list_item_1, bookArrayList);
-
-      /*  BookListAdapter bookListAdapter = new BookListAdapter(bookList, this);
-        listView.setAdapter(bookListAdapter);
-*/
 
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+
+
+
+
+    }
 
     @Override
     public void onClick(View v) {
@@ -95,6 +110,20 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
 
         }
+
+    }
+
+    private void loadList(){
+        RealmQuery<Book> bookRealmQuery = ReaderRealm.getRealm().where(Book.class);
+        // временно --
+//        long maxId = (long) bookRealmQuery.max("id");
+//        bookRealmQuery.between("id", (maxId - 10),maxId);
+        bookList = bookRealmQuery.findAll();
+//        int numObj = (int) bookRealmQuery.count();
+
+
+        BookListAdapter bookListAdapter = new BookListAdapter(bookList, this);
+        listView.setAdapter(bookListAdapter);
 
     }
 

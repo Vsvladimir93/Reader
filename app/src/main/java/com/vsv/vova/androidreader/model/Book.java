@@ -13,21 +13,21 @@ public class Book extends RealmObject {
     public Book() {
     }
 
-    public Book(String title, Uri uri, int id, int page) {
+    public Book(String title, Uri uri, long page, long id) {
         this.title = title;
         this.uri = uri.toString();
-        this.id = id;
         this.page = page;
+        this.id = id;
     }
 
 
     @PrimaryKey
-    private int id;
+    private long id;
     private String title;
     private String uri;
-    private int page;
+    private long page;
 
-    public int getPage() {
+    public long getPage() {
         return page;
     }
 
@@ -35,9 +35,7 @@ public class Book extends RealmObject {
         this.page = page;
     }
 
-
-
-    public int getId() {
+    public long getId() {
         return id;
     }
 
@@ -57,7 +55,7 @@ public class Book extends RealmObject {
         this.uri = uri.toString();
     }
 
-    public void setId(int id) {
+    public void setId(long id) {
         this.id = id;
     }
 }
