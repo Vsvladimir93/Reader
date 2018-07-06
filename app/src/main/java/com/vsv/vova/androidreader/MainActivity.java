@@ -115,7 +115,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 //        bookRealmQuery.between("id", (maxId - 10),maxId);
         bookList = bookRealmQuery.findAll();
 //        int numObj = (int) bookRealmQuery.count();
-        String[] names = {"daniel", "nick", "peter", "veronica"};
         ArrayAdapter<CharSequence> arrayAdapter = ArrayAdapter.createFromResource(this, R.array.names, android.R.layout.simple_list_item_1);
 //        BookListAdapter bookListAdapter = new BookListAdapter(bookList, this);
         listView.setAdapter(arrayAdapter);
