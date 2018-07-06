@@ -1,6 +1,5 @@
 package com.vsv.vova.androidreader;
 
-import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.support.v7.app.AppCompatActivity;
@@ -8,13 +7,10 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
-import android.widget.Toast;
-
 import com.vsv.vova.androidreader.model.Book;
-
-import java.util.ArrayList;
 import java.util.List;
 
 import io.realm.RealmQuery;
@@ -42,8 +38,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         loadList();
 
-        final Context context = this;
-
+        listView.setClickable(true);
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -120,10 +115,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 //        bookRealmQuery.between("id", (maxId - 10),maxId);
         bookList = bookRealmQuery.findAll();
 //        int numObj = (int) bookRealmQuery.count();
-
-
-        BookListAdapter bookListAdapter = new BookListAdapter(bookList, this);
-        listView.setAdapter(bookListAdapter);
+        String[] names = {"daniel", "nick", "peter", "veronica"};
+        ArrayAdapter<CharSequence> arrayAdapter = ArrayAdapter.createFromResource(this, R.array.names, android.R.layout.simple_list_item_1);
+//        BookListAdapter bookListAdapter = new BookListAdapter(bookList, this);
+        listView.setAdapter(arrayAdapter);
 
     }
 

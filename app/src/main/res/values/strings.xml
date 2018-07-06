@@ -2,4 +2,12 @@
     <string name="app_name">AndroidReader</string>
     <string name="find">Find Book</string>
     <string name="continueRead">Continue</string>
+    <string-array name="names">
+        <item>John</item>
+        <item>Nick</item>
+        <item>Peter</item>
+        <item>Nicole</item>
+        <item>Kate</item>
+        <item>Sara</item>
+    </string-array>
 </resources>
