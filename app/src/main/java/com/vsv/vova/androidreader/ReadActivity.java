@@ -37,7 +37,11 @@ public class ReadActivity extends AppCompatActivity implements OnPageChangeListe
         RealmQuery<Book> bookQuery = ReaderRealm.getRealm().where(Book.class);
         countObjects = (int) bookQuery.count();
         Log.d("vvv", "get count of objects in realm - " + countObjects);
-        maximumId = (long) bookQuery.max("id");
+        if(bookQuery.max("id")==null){
+            maximumId = 0;
+        }else{
+            maximumId = (long) bookQuery.max("id");
+        }
         Log.d("vvv", "maximum Id - " + maximumId);
 
         intent = getIntent();
@@ -49,7 +53,6 @@ public class ReadActivity extends AppCompatActivity implements OnPageChangeListe
     protected void onResume() {
         super.onResume();
         loadPdfView();
-
     }
 
     private void loadPdfView() {
@@ -116,6 +119,7 @@ public class ReadActivity extends AppCompatActivity implements OnPageChangeListe
         ReaderRealm.getRealm().executeTransaction(new Realm.Transaction() {
             @Override
             public void execute(Realm realm) {
+
                 //Достаем название
                 //Если в Реалме есть книга с таким названием
                 RealmQuery<Book> bookRealmQuery = ReaderRealm.getRealm().where(Book.class);
