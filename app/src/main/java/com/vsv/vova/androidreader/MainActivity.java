@@ -6,14 +6,9 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.View;
-import android.widget.AdapterView;
 import android.widget.Button;
-
-
 import com.vsv.vova.androidreader.Realm.ReaderRealm;
-import com.vsv.vova.androidreader.adapter.BookListAdapter;
 import com.vsv.vova.androidreader.adapter.OnItemClickListener;
 import com.vsv.vova.androidreader.adapter.RecyclerViewAdapter;
 import com.vsv.vova.androidreader.model.Book;
@@ -22,11 +17,12 @@ import java.util.List;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import butterknife.OnClick;
 import io.realm.RealmQuery;
 import io.realm.RealmResults;
 import io.realm.Sort;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener, OnItemClickListener {
+public class MainActivity extends AppCompatActivity implements OnItemClickListener {
 
     private final String LOG_TAG = "MainActivity";
 
@@ -46,15 +42,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
 
-        btnFind.setOnClickListener(this);
-
     }
-
-    //Передать Uri книги
-
-    // Вытащить название из списка
-    // Найти по названию книгу в Реалме
-    // Передать Uri
 
     @Override
     protected void onResume() {
@@ -62,13 +50,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         loadBookList();
     }
 
-    private void openBook(Uri uri){
+    private void openBook(Uri uri, long page){
         Intent intent = new Intent(this, ReadActivity.class);
         intent.putExtra("uri", uri.toString());
+        intent.putExtra("page", page);
         startActivity(intent);
     }
 
-    @Override
+    @OnClick(R.id.buttonFind)
     public void onClick(View v) {
         Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
         intent.addCategory(Intent.CATEGORY_OPENABLE);
@@ -81,7 +70,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         if (resultCode == RESULT_OK) {
             if (resultData != null) {
                 uri = resultData.getData();
-                openBook(uri);
+                openBook(uri, 0);
             }
         }
     }
@@ -105,6 +94,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     public void onItemClick(View view, int position) {
-        Log.d(LOG_TAG, bookList.get(position).getTitle() + " ---------------------");
+       openBook(bookList.get(position).getUri() ,bookList.get(position).getPage());
     }
 }

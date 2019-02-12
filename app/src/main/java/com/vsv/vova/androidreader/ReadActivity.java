@@ -40,6 +40,7 @@ public class ReadActivity extends AppCompatActivity implements OnPageChangeListe
             if(intent.getStringExtra("uri")!=null){
             uri = Uri.parse(intent.getStringExtra("uri"));
             }
+            pageNumber = (int) intent.getLongExtra("page", 0L);
             pdfView.fromUri(uri)
                     .defaultPage(pageNumber)
                     .onPageChange(this)
