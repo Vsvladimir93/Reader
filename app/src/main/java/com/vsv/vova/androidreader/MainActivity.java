@@ -34,14 +34,11 @@ public class MainActivity extends AppCompatActivity implements OnItemClickListen
     private static Uri uri;
     List<Book> bookList;
 
-
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
-
     }
 
     @Override

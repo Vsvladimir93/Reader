@@ -17,7 +17,7 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
 
 
     private OnItemClickListener onItemClickListener;
-    List<Book> bookList;
+    private List<Book> bookList;
 
     public RecyclerViewAdapter(List<Book> bookList) {
         this.bookList = bookList;

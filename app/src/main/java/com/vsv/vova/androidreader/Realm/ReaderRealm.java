@@ -34,13 +34,6 @@ public class ReaderRealm {
         return getInstance().realm;
     }
 
-    public static Book loadBookRdb(String title){
-
-        RealmQuery<Book> bookRealmQuery = ReaderRealm.getRealm().where(Book.class);
-        return bookRealmQuery.equalTo("title", title).findFirst();
-
-    }
-
     public static void saveBookRdb(final Uri uri, final int page){
 
         //Достаем название из Uri пути
@@ -59,15 +52,11 @@ public class ReaderRealm {
                     //Перезаписывается книга с новой датой и страницей
                     book.setDate(Calendar.getInstance().getTimeInMillis());
                     book.setPage(page);
-                    Log.d(LOG_TAG, "saveBook - find the same book - Write");
                 } else {
                     //Иначе записывается новая книга
                     Book newBook = new Book(bookTitle, uri, page, Calendar.getInstance().getTimeInMillis());
                     realm.copyToRealm(newBook);
-                    Log.d(LOG_TAG, "saveBook - don.t find the same book - Write");
                 }
-                Log.d(LOG_TAG, "book saved.title- " + bookTitle + " Calendar "
-                        + Calendar.getInstance().getTimeInMillis() + " Page- " + page);
             }
         });
 
