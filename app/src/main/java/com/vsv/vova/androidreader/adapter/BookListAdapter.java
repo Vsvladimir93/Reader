@@ -1,15 +1,14 @@
-package com.vsv.vova.androidreader;
+package com.vsv.vova.androidreader.adapter;
 
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.database.DataSetObserver;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ListAdapter;
 import android.widget.TextView;
 
+import com.vsv.vova.androidreader.R;
 import com.vsv.vova.androidreader.model.Book;
 
 import java.util.List;
@@ -56,7 +55,7 @@ public class BookListAdapter implements ListAdapter {
 
     @Override
     public long getItemId(int position) {
-        return bookList.get(position).getId();
+        return position;
     }
 
     @Override
@@ -67,15 +66,17 @@ public class BookListAdapter implements ListAdapter {
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
 
+        parent.setDescendantFocusability(ViewGroup.FOCUS_BLOCK_DESCENDANTS);
+
         View view = convertView;
 
-        if(view == null){
-            view = layoutInflater.inflate(R.layout.book_item_layout, parent,false );
+        if (view == null) {
+            view = layoutInflater.inflate(R.layout.book_item_layout, parent, false);
         }
-    Book book = getBook(position);
+        Book book = getBook(position);
 
-    TextView textView = (TextView) view.findViewById(R.id.textView);
-    TextView textView2 = (TextView) view.findViewById(R.id.textView2);
+        TextView textView = (TextView) view.findViewById(R.id.textView);
+        TextView textView2 = (TextView) view.findViewById(R.id.textView2);
         Integer page = (int) book.getPage() + 1;
         textView2.setText(page.toString());
         textView.setText(book.getTitle());
@@ -83,7 +84,7 @@ public class BookListAdapter implements ListAdapter {
         return view;
     }
 
-    public Book getBook(int position){
+    public Book getBook(int position) {
         return bookList.get(position);
     }
 

@@ -4,121 +4,107 @@ import android.content.Intent;
 import android.net.Uri;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.ListView;
+
+
+import com.vsv.vova.androidreader.Realm.ReaderRealm;
+import com.vsv.vova.androidreader.adapter.BookListAdapter;
+import com.vsv.vova.androidreader.adapter.OnItemClickListener;
+import com.vsv.vova.androidreader.adapter.RecyclerViewAdapter;
 import com.vsv.vova.androidreader.model.Book;
+
 import java.util.List;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
 import io.realm.RealmQuery;
+import io.realm.RealmResults;
+import io.realm.Sort;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener {
+public class MainActivity extends AppCompatActivity implements View.OnClickListener, OnItemClickListener {
 
+    private final String LOG_TAG = "MainActivity";
+
+    @BindView(R.id.buttonFind)
     Button btnFind;
-    Button btnContinue;
-    public static final int REQUEST_CODE_FIND = 1;
-    private static Uri uri;
+    @BindView(R.id.books_recycler_view)
+    RecyclerView booksRecyclerView;
 
-    ListView listView;
+    private static Uri uri;
     List<Book> bookList;
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        ButterKnife.bind(this);
 
-        btnFind = findViewById(R.id.buttonFind);
         btnFind.setOnClickListener(this);
-        btnContinue = findViewById(R.id.buttonContinue);
-        btnContinue.setOnClickListener(this);
-        listView = findViewById(R.id.listView);
-
-        loadList();
-
-        listView.setClickable(true);
-        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-               Log.d("vvv", "position - " + position + " id - " + id + "");
-            }
-        });
-
-        listView.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                Log.d("vvv", "item selected " + position);
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-
-            }
-        });
-
-
 
     }
+
+    //Передать Uri книги
+
+    // Вытащить название из списка
+    // Найти по названию книгу в Реалме
+    // Передать Uri
 
     @Override
     protected void onResume() {
         super.onResume();
+        loadBookList();
+    }
 
-
-
-
-
+    private void openBook(Uri uri){
+        Intent intent = new Intent(this, ReadActivity.class);
+        intent.putExtra("uri", uri.toString());
+        startActivity(intent);
     }
 
     @Override
     public void onClick(View v) {
-        Intent intent;
-        switch (v.getId()) {
-            case R.id.buttonFind:
-                intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-                intent.addCategory(Intent.CATEGORY_OPENABLE);
-                intent.setType("application/pdf");
-                startActivityForResult(intent, REQUEST_CODE_FIND);
-                Log.d("vvv", "Request code find");
-                break;
-            case R.id.buttonContinue:
-                intent = new Intent(this, ReadActivity.class);
-                intent.putExtra("extra", "CONTINUE");
-                startActivity(intent);
-                Log.d("vvv", "continue");
-                break;
-        }
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType("application/pdf");
+        startActivityForResult(intent,1);
     }
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent resultData) {
-        if (requestCode == REQUEST_CODE_FIND && resultCode == RESULT_OK) {
-            Log.d("vvv", "onResult Find");
-            uri = null;
+        if (resultCode == RESULT_OK) {
             if (resultData != null) {
                 uri = resultData.getData();
-                Intent intent = new Intent(this, ReadActivity.class);
-                intent.putExtra("extra", uri.toString());
-                startActivity(intent);
+                openBook(uri);
             }
-
         }
-
     }
 
-    private void loadList(){
+    private void loadBookList() {
+
         RealmQuery<Book> bookRealmQuery = ReaderRealm.getRealm().where(Book.class);
-        // временно --
-//        long maxId = (long) bookRealmQuery.max("id");
-//        bookRealmQuery.between("id", (maxId - 10),maxId);
         bookList = bookRealmQuery.findAll();
-//        int numObj = (int) bookRealmQuery.count();
-        ArrayAdapter<CharSequence> arrayAdapter = ArrayAdapter.createFromResource(this, R.array.names, android.R.layout.simple_list_item_1);
-//        BookListAdapter bookListAdapter = new BookListAdapter(bookList, this);
-        listView.setAdapter(arrayAdapter);
+
+        bookList = ((RealmResults<Book>) bookList).sort("date" , Sort.DESCENDING);
+
+        LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this);
+        booksRecyclerView.setLayoutManager(linearLayoutManager);
+
+        RecyclerViewAdapter recyclerViewAdapter = new RecyclerViewAdapter(bookList);
+        recyclerViewAdapter.setOnItemClickListener(this);
+
+        booksRecyclerView.setAdapter(recyclerViewAdapter);
 
     }
 
+    @Override
+    public void onItemClick(View view, int position) {
+        Log.d(LOG_TAG, bookList.get(position).getTitle() + " ---------------------");
+    }
 }
