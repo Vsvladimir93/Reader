@@ -2,7 +2,9 @@ package com.vsv.vova.androidreader;
 
 import android.content.Intent;
 import android.net.Uri;
-import android.support.v7.app.AppCompatActivity;
+
+import androidx.appcompat.app.AppCompatActivity;
+
 import android.os.Bundle;
 import android.util.Log;
 
@@ -10,15 +12,18 @@ import com.github.barteksc.pdfviewer.PDFView;
 import com.github.barteksc.pdfviewer.listener.OnLoadCompleteListener;
 import com.github.barteksc.pdfviewer.listener.OnPageChangeListener;
 import com.github.barteksc.pdfviewer.scroll.DefaultScrollHandle;
-import com.vsv.vova.androidreader.Realm.ReaderRealm;
+import com.vsv.vova.androidreader.Room.Book;
+
+import java.util.Calendar;
 
 
 public class ReadActivity extends AppCompatActivity implements OnPageChangeListener, OnLoadCompleteListener {
 
     PDFView pdfView;
     Intent intent;
-    private static Uri uri;
-    int pageNumber;
+    private static Uri uri = Uri.EMPTY;
+    int pageNumber = 0;
+    ReaderRepository repo = new ReaderRepository(this.getApplication());
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -27,7 +32,7 @@ public class ReadActivity extends AppCompatActivity implements OnPageChangeListe
 
         intent = getIntent();
         pdfView = findViewById(R.id.pdfView);
-
+        pageNumber = intent.getIntExtra("page", 0);
     }
 
     @Override
@@ -37,42 +42,50 @@ public class ReadActivity extends AppCompatActivity implements OnPageChangeListe
     }
 
     private void loadPdfView() {
-            if(intent.getStringExtra("uri")!=null){
+        if (intent.hasExtra("uri")) {
             uri = Uri.parse(intent.getStringExtra("uri"));
-            }
-            pageNumber = (int) intent.getLongExtra("page", 0L);
-            pdfView.fromUri(uri)
-                    .defaultPage(pageNumber)
-                    .onPageChange(this)
-                    .enableAnnotationRendering(true)
-                    .onLoad(this)
-                    .scrollHandle(new DefaultScrollHandle(this))
-                    .load();
+        }
+        pdfView.fromUri(uri)
+                .defaultPage(pageNumber)
+                .onPageChange(this)
+                .enableAnnotationRendering(true)
+                .onLoad(this)
+                .scrollHandle(new DefaultScrollHandle(this))
+                .load();
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        Log.d("vvv", "onPause method");
-        ReaderRealm.saveBookRdb(uri, pageNumber);
+        String title = uri.getLastPathSegment();
+        try {
+           title = title.replace("primary:Download/", "");
+        } catch(NullPointerException e) {
+            e.printStackTrace();
+        }
+        repo.insertAll(new Book(title,
+                uri.toString(), pageNumber, Calendar.getInstance().getTimeInMillis()));
     }
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        outState.putInt("page",pageNumber);
+        outState.putInt("page", pageNumber);
+        Log.d("mytag", pageNumber + " saveInst");
     }
 
     @Override
     protected void onRestoreInstanceState(Bundle savedInstanceState) {
         super.onRestoreInstanceState(savedInstanceState);
         pageNumber = savedInstanceState.getInt("page");
+        Log.d("mytag", pageNumber + " restoreInst");
     }
 
     @Override
     public void onPageChanged(int page, int pageCount) {
         //Переменная которой присваивается страница при перемещении экрана
         pageNumber = page;
+        Log.d("mytag", pageNumber + " page changed");
     }
 
     @Override
